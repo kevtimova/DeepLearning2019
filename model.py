@@ -22,5 +22,5 @@ class Model(nn.Module):
                 assert torch.equal(pretrained_model[name].cpu(), module.cpu())
                 print('{} have been loaded correctly in current model.'.format(name))
 
-    def forward(self):
+    def forward(self, x):
         raise NotImplementedError
