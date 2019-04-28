@@ -4,33 +4,27 @@ import json
 import torch
 
 from torch.utils.data import DataLoader
-from torchvision import transforms, datasets
+from torchvision import datasets, transforms
 
-def load_data(path, batch_size):
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor()
+def load_data(data_dir, batch_size, split):
+    """ Method returning a data loader for labeled data """
+    # TODO: add data transformations if needed
+    transform = transforms.Compose([
+        transforms.ToTensor()
         ]
     )
-
-    val_data = datasets.ImageFolder('{}/{}/val'.format(path, 'supervised'), transform=transform)
-    test_data = datasets.ImageFolder('{}/{}/test'.format(path, 'supervised'), transform=transform)
-    data_loader_val = DataLoader(
-        val_data,
+    data = datasets.ImageFolder(f'{data_dir}/supervised/{split}', transform=transform)
+    data_loader = DataLoader(
+        data,
         batch_size=batch_size,
         shuffle=False,
         num_workers=0
     )
-    data_loader_test = DataLoader(
-        test_data,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=0
-    )
-
-    return data_loader_val, data_loader_test
+    return data_loader
 
 def evaluate(model, data_loader, device, split, top_k=5):
+    """ Method returning accuracy@1 and accuracy@top_k """
+    print(f'\nEvaluating {split} set...')
     model.eval()
     n_samples = 0.
     n_correct_top_1 = 0
@@ -45,24 +39,25 @@ def evaluate(model, data_loader, device, split, top_k=5):
         output = model(img)
 
         # Top 1 accuracy
-        top_1_pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
-        n_correct_top_1 += top_1_pred.eq(target.view_as(top_1_pred)).sum().item()
+        pred_top_1 = torch.topk(output, k=1, dim=1)[1]
+        n_correct_top_1 += pred_top_1.eq(target.view_as(pred_top_1)).int().sum().item()
 
         # Top k accuracy
-        top_k_ind = torch.from_numpy(output.data.cpu().numpy().argsort()[:, -top_k:]).long()
+        pred_top_k = torch.topk(output, k=top_k, dim=1)[1]
         target_top_k = target.view(-1, 1).expand(batch_size, top_k)
-        n_correct_top_k += (top_k_ind == target_top_k.cpu()).sum().item()
+        n_correct_top_k += pred_top_k.eq(target_top_k).int().sum().item()
 
     # Accuracy
     top_1_acc = n_correct_top_1/n_samples
     top_k_acc = n_correct_top_k/n_samples
 
     # Log
-    print('{} top 1 accuracy: {:.4f}'.format(split, top_1_acc))
-    print('{} top {} accuracy: {:.4f}'.format(split, top_k, top_k_acc))
+    print(f'{split} top 1 accuracy: {top_1_acc:.4f}')
+    print(f'{split} top {top_k} accuracy: {top_k_acc:.4f}')
 
 
 if __name__ == '__main__':
+
     # Define arguments
     parser = argparse.ArgumentParser(description='Evaluation')
     parser.add_argument('--data_dir', type=str, default='./data',
@@ -75,20 +70,25 @@ if __name__ == '__main__':
                         help='enables CUDA training')
     parser.add_argument('--seed', type=int, default=1008, metavar='S',
                         help='random seed')
+
     # Parse arguments
     args = parser.parse_args()
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     print(json.dumps(args.__dict__, sort_keys=True, indent=4) + '\n')
     args.device = torch.device("cuda" if args.cuda else "cpu")
 
-    # Load model
-    # model = Model().load_model(args.model_path)
-    model = Model()
+    # Set random seed
+    torch.manual_seed(args.seed)
+    if args.cuda:
+        torch.cuda.manual_seed_all(args.seed)
+
+    # Load pre-trained model
+    model = Model() # DO NOT modify this line - if your Model() takes arguments, they should have default values
 
     # Load data
-    data_loader_val, data_loader_test = load_data(args.data_dir, args.batch_size)
+    data_loader_val = load_data(args.data_dir, args.batch_size, split='val')
+    # data_loader_test = load_data(args.data_dir, args.batch_size, split='test')
 
-
-    # Evaluate
+    # Evaluate model
     evaluate(model, data_loader_val, args.device, 'Validation')
-    evaluate(model, data_loader_test, args.device, 'Test')
+    # evaluate(model, data_loader_test, args.device, 'Test')
