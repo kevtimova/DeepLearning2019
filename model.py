@@ -33,7 +33,6 @@ class Model(nn.Module):
             else:
                 raise ValueError("state_dict() keys do not match")
 
-
     def forward(self, x):
         # TODO
         raise NotImplementedError
