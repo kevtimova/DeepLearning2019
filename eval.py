@@ -8,7 +8,7 @@ from torchvision import datasets, transforms
 
 def load_data(data_dir, batch_size, split):
     """ Method returning a data loader for labeled data """
-    # TODO: add data transformations if needed
+    # TODO (optional): add data transformations if needed
     transform = transforms.Compose([
         transforms.ToTensor()
         ]
