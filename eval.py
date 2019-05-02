@@ -83,9 +83,9 @@ if __name__ == '__main__':
         torch.cuda.manual_seed_all(args.seed)
 
     # Load pre-trained model
-    model = Model() # DO NOT modify this line - if your Model() takes arguments, they should have default values
+    model = Model().to(args.device) # DO NOT modify this line - if your Model() takes arguments, they should have default values
     print('n parameters: %d' % sum([m.numel() for m in model.parameters()]))
-    
+
     # Load data
     data_loader_val = load_data(args.data_dir, args.batch_size, split='val')
     # data_loader_test = load_data(args.data_dir, args.batch_size, split='test')
