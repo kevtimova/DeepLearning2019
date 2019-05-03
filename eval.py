@@ -91,5 +91,6 @@ if __name__ == '__main__':
     # data_loader_test = load_data(args.data_dir, args.batch_size, split='test')
 
     # Evaluate model
-    evaluate(model, data_loader_val, args.device, 'Validation')
-    # evaluate(model, data_loader_test, args.device, 'Test')
+    with torch.no_grad():
+        evaluate(model, data_loader_val, args.device, 'Validation')
+        # evaluate(model, data_loader_test, args.device, 'Test')
