@@ -2,6 +2,7 @@ from model import Model
 import argparse
 import json
 import torch
+import time
 
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -92,5 +93,11 @@ if __name__ == '__main__':
 
     # Evaluate model
     with torch.no_grad():
+        t0 = time.time()
+        print('Start time: {}'.format(time.asctime(time.localtime(t0))))
         evaluate(model, data_loader_val, args.device, 'Validation')
+        t1 = time.time()
+        print('Validation time: {:.3f} s finished {}'.format(t1 - t0, time.asctime(time.localtime(t1))))
         # evaluate(model, data_loader_test, args.device, 'Test')
+        # t2 = time.time()
+        # print('Test time: {:.3f} s finished {}'.format(t2 - t1, time.asctime(time.localtime(t2))))
